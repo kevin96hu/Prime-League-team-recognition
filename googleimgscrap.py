@@ -6,7 +6,7 @@ Created on Wed Mar 01 00:22:34 2019
 @author: kevin
 """
 
-
+import os
 import urllib.request
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
@@ -15,10 +15,12 @@ import time
 headers={
         'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36'
         }
-def scrap_google_img(teamname,keyword,limit):
-    path = r"/Users/kevin/Desktop/photo/"
+def scrap_google_img(teamname,playername,keyword,limit):
+    path = r"/Users/kevin/Desktop/photo2/"
+    if ((playername in os.listdir(path))==False):
+        os.makedirs(path+'/'+playername)
     chrome_options = webdriver.ChromeOptions()
-    chrome_options.add_argument('--headless')
+    #chrome_options.add_argument('--headless')
     link_list = []
         
     x = (limit / 50) - 5
@@ -30,7 +32,7 @@ def scrap_google_img(teamname,keyword,limit):
     
     searchbar = driver.find_element_by_name('q')
     searchbar.clear()
-    searchbar.send_keys(teamname+' '+keyword)
+    searchbar.send_keys(keyword)
     
     button = driver.find_element_by_class_name('Tg7LZd')
     button.click()
@@ -64,30 +66,53 @@ def scrap_google_img(teamname,keyword,limit):
     
     print("Grabbing Links...")
     
-    i=1
+    '''i=1
     for i in range(limit):
         elem = driver.find_elements_by_xpath('//*[@id="rg_s"]/div['+str(i+1)+']/a[1]/img')
         if (elem[0].get_attribute("data-src")==None):
             link_list.append(elem[0].get_attribute("src"))
         else:
-            link_list.append(elem[0].get_attribute("data-src"))
+            link_list.append(elem[0].get_attribute("data-src"))'''
 
-       
+    url_list = []
+    i=1
+    for i in range(limit):
+        elem = driver.find_elements_by_xpath('//*[@id="rg_s"]/div['+str(i+1)+']/a[1]')
+        link_list.append(elem[0].get_attribute("href"))
+    
+    driver.close()
+    
+    for i in range(limit):      
+        driver = webdriver.Chrome(executable_path="/usr/local/bin/chromedriver", chrome_options=chrome_options)
+        driver.get(link_list[i])
+        try:
+            elem = driver.find_elements_by_xpath('//*[@id="irc_cc"]/div[2]/div[1]/div[2]/div[1]/a/img')
+            url_list.append(elem[0].get_attribute("src"))
+            driver.close()
+        except:
+            driver.close()
+    
+    
+    
     print("Downloading Images to Folder...")
+    i = 1
     j = 0
     opener = urllib.request.build_opener()
     opener.addheaders = [('user-agent','Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36')]
     urllib.request.install_opener(opener)
-    while j<limit:
-        j += 1
-        print("Downloading Image"+str(j))
-        urllib.request.urlretrieve(link_list[j-1], path+teamname+' '+keyword+str(j)+".jpg")
+    while j<len(url_list):
+        try:
+            print("Downloading Image"+str(j))
+            urllib.request.urlretrieve(url_list[j], path+'/'+playername+'/'+keyword+str(i)+".jpg")
+            j += 1
+            i += 1
+        except:
+            j += 1
 
         
     
     print("done...")
-    driver.close()
-    
+
     
     
     
